@@ -33,8 +33,8 @@ export function DirectorAI() {
       const { data, error } = await supabase.functions.invoke("director-ai", { body: { mode: "brief" } });
       if (error) throw error;
       setBrief(data);
-    } catch {
-      // silent
+    } catch (e: unknown) {
+      // silent - error handled by loading state
     } finally {
       setBriefLoading(false);
     }
@@ -62,7 +62,7 @@ export function DirectorAI() {
       });
       if (error) throw error;
       setMessages([...next, { role: "assistant", content: data?.reply ?? "…" }]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setMessages([...next, { role: "assistant", content: "I hit a snag. Try again in a moment." }]);
     } finally {
       setSending(false);
@@ -215,7 +215,7 @@ function BriefRow({
   label,
   text,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   tint: "primary" | "accent" | "success";
   label: string;
   text: string;

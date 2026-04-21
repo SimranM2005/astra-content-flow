@@ -1,5 +1,6 @@
-import { Eye, Heart, DollarSign, UserPlus } from "lucide-react";
+import { Eye, Heart, DollarSign, UserPlus, Zap, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/creator/DashboardLayout";
 import { KpiCard } from "@/components/creator/KpiCard";
 import { GrowthChart } from "@/components/creator/GrowthChart";
@@ -7,6 +8,9 @@ import { ContentFeed } from "@/components/creator/ContentFeed";
 import { AudienceCard } from "@/components/creator/AudienceCard";
 import { AiIdeasCard } from "@/components/creator/AiIdeasCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useAuth } from "@/hooks/useAuth";
+import { seedDemoData, checkAndSeedIfNeeded } from "@/hooks/useSeedData";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmt = (n: number) =>
   n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : n.toString();
@@ -14,9 +18,59 @@ const money = (n: number) => `$${fmt(n)}`;
 
 const Index = () => {
   const { totals, deltas, sparks, growth } = useDashboardData();
+  const { user } = useAuth();
+  const [hasVideos, setHasVideos] = useState(true);
+  const [seeding, setSeeding] = useState(false);
+  const isDemoAccount = user?.email === "demo@creatorstudio.com";
+
+  // Check if user has videos and offer to seed demo data
+  useEffect(() => {
+    const checkVideos = async () => {
+      const { count } = await supabase
+        .from("videos")
+        .select("*", { count: "exact", head: true });
+      setHasVideos((count ?? 0) > 0);
+    };
+    checkVideos();
+  }, []);
+
+  const handleSeedData = async () => {
+    setSeeding(true);
+    try {
+      await seedDemoData();
+      setHasVideos(true);
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   return (
     <DashboardLayout>
+      {isDemoAccount && !hasVideos && (
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="glass-card border border-accent/40 bg-accent/10 overflow-hidden p-6 md:p-8 mb-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-accent">Demo Account Ready</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Populate your dashboard with sample videos and analytics to explore all features.
+              </p>
+            </div>
+            <button
+              onClick={handleSeedData}
+              disabled={seeding}
+              className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-glow transition hover:opacity-90 disabled:opacity-60 whitespace-nowrap"
+            >
+              {seeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              {seeding ? "Seeding..." : "Load Demo Data"}
+            </button>
+          </div>
+        </motion.section>
+      )}
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

@@ -118,7 +118,7 @@ export default function UploadPage() {
             status: "analyzing",
             viral_status: "pending",
             source_type: "upload",
-          } as any)
+          } as Record<string, unknown>)
           .select("id")
           .single();
         if (insErr) throw insErr;
@@ -137,12 +137,13 @@ export default function UploadPage() {
         toast({ title: "Upload complete 🎬", description: "Sending to AI Reviewer…" });
         supabase.functions.invoke("analyze-video", { body: { video_id: inserted.id } }).catch(() => {});
         setTimeout(() => navigate(`/dashboard/video/${inserted.id}`), 800);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error(e);
         stopFakeProgress();
         setState("error");
         setProgress(0);
-        toast({ title: "Upload failed", description: e?.message ?? "Something went wrong.", variant: "destructive" });
+        const message = e instanceof Error ? e.message : "Something went wrong.";
+        toast({ title: "Upload failed", description: message, variant: "destructive" });
       }
     },
     [user, navigate],
@@ -160,13 +161,13 @@ export default function UploadPage() {
         body: { url: url.trim() },
       });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      if ((data as Record<string, unknown>)?.error) throw new Error((data as Record<string, unknown>).error as string);
 
       celebrate();
       toast({ title: "Link validated ✓", description: "Sending to AI Reviewer…" });
-      const vid = (data as any)?.video_id;
+      const vid = (data as Record<string, unknown>)?.video_id;
       if (vid) setTimeout(() => navigate(`/dashboard/video/${vid}`), 600);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       toast({ title: "Fetch failed", description: e?.message ?? "Could not process link.", variant: "destructive" });
     } finally {

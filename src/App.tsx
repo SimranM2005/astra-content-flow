@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import UploadPage from "./pages/UploadPage";
 import ContentPage from "./pages/ContentPage";
 import VideoDetailPage from "./pages/VideoDetailPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -55,6 +57,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <VideoDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
                 </ProtectedRoute>
               }
             />

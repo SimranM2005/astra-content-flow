@@ -32,8 +32,8 @@ Deno.serve(async (req) => {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
 
-    let videos: any[] = [];
-    let topAnalytics: any[] = [];
+    let videos: unknown[] = [];
+    let topAnalytics: unknown[] = [];
     if (userId) {
       const { data: vids } = await supabase
         .from("videos")
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     const j = await aiResp.json();
     const args = j?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-    let parsed: any = {};
+    let parsed: Record<string, unknown> = {};
     try { parsed = typeof args === "string" ? JSON.parse(args) : args ?? {}; } catch { parsed = {}; }
 
     return new Response(JSON.stringify({ ...FALLBACK, ...parsed }), {

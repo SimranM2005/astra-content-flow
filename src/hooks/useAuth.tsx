@@ -1,3 +1,6 @@
+"use client";
+/* eslint-disable react-refresh/only-export-components */
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";

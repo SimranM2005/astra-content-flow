@@ -14,8 +14,9 @@ export function AiIdeasCard() {
       const { data, error } = await supabase.functions.invoke("ai-ideas");
       if (error) throw error;
       setIdeas((data?.ideas ?? []).slice(0, 3));
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to generate ideas");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to generate ideas";
+      setError(message);
     } finally {
       setLoading(false);
     }

@@ -42,7 +42,7 @@ export function AudienceCard() {
   );
 }
 
-function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function Stat({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
     <div className="rounded-xl border border-border/60 bg-secondary/40 p-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -79,8 +79,8 @@ Deno.serve(async (req) => {
     if (vErr || !video) throw vErr ?? new Error("Video not found");
     if (video.user_id !== userId) throw new Error("Forbidden");
 
-    const sourceUrl = (video as any).external_url ?? (video as any).video_url ?? null;
-    const platform = (video as any).source_platform ?? ((video as any).source_type === "link" ? "link" : "upload");
+    const sourceUrl = (video as Record<string, unknown>).external_url ?? (video as Record<string, unknown>).video_url ?? null;
+    const platform = (video as Record<string, unknown>).source_platform ?? (((video as Record<string, unknown>).source_type === "link") ? "link" : "upload");
 
     await supabase.from("videos").update({ viral_status: "analyzing" }).eq("id", video_id);
 

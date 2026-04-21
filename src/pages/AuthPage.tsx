@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Loader2, Mail, Lock } from "lucide-react";
+import { Sparkles, Loader2, Mail, Lock, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+
+// Demo credentials
+const DEMO_EMAIL = "demo@creatorstudio.com";
+const DEMO_PASSWORD = "DemoCreator@2026";
 
 interface Props {
   mode: "login" | "signup";
@@ -43,10 +47,60 @@ export default function AuthPage({ mode }: Props) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
       toast({
         title: mode === "signup" ? "Signup failed" : "Sign-in failed",
-        description: err?.message ?? "Something went wrong.",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setSubmitting(true);
+    try {
+      // First try to sign in with demo credentials
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+      });
+      
+      if (signInError?.message.includes("Invalid login credentials")) {
+        // If demo account doesn't exist, create it
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: {
+              username: "demo_creator",
+            },
+          },
+        });
+        
+        if (signUpError && !signUpError.message.includes("User already registered")) {
+          throw signUpError;
+        }
+        
+        // Try signing in again after signup
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
+        });
+        if (retryError) throw retryError;
+      } else if (signInError) {
+        throw signInError;
+      }
+      
+      toast({ title: "Welcome Demo Creator", description: "Demo account access granted!" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
+      toast({
+        title: "Demo login failed",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -57,14 +111,42 @@ export default function AuthPage({ mode }: Props) {
   const handleGoogle = async () => {
     setOauthLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/dashboard`,
-      });
-      if (result.error) {
-        toast({ title: "Google sign-in failed", description: String((result.error as any)?.message ?? result.error), variant: "destructive" });
+      // Try using Lovable SDK first
+      try {
+        const result = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: `${window.location.origin}/dashboard`,
+        });
+        if (result.error) {
+          console.error("Lovable OAuth error:", result.error);
+          // Fall through to direct Supabase OAuth
+          throw new Error("Lovable OAuth failed, trying Supabase");
+        }
+        if (result.redirected) {
+          return;
+        }
+      } catch (lovableError) {
+        console.log("Lovable SDK unavailable, using Supabase directly:", lovableError);
+        // Fall back to direct Supabase OAuth
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/dashboard`,
+          },
+        });
+        if (error) throw error;
+        if (data) {
+          // Handle the OAuth session if returned directly
+          return;
+        }
       }
-    } catch (err: any) {
-      toast({ title: "Google sign-in failed", description: err?.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to sign in with Google. Please try again or use email.";
+      console.error("Google sign-in error:", err);
+      toast({
+        title: "Google sign-in failed",
+        description: message,
+        variant: "destructive",
+      });
     } finally {
       setOauthLoading(false);
     }
@@ -108,6 +190,15 @@ export default function AuthPage({ mode }: Props) {
         >
           {oauthLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleLogo />}
           Continue with Google
+        </button>
+
+        <button
+          onClick={handleDemoLogin}
+          disabled={submitting || oauthLoading}
+          className="mt-3 flex w-full items-center justify-center gap-3 rounded-xl border border-border/60 bg-secondary/40 px-4 py-2.5 text-sm font-medium transition hover:border-accent/40 hover:bg-secondary disabled:opacity-50"
+        >
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+          Try Demo Account
         </button>
 
         <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">

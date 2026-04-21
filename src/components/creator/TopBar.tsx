@@ -32,8 +32,9 @@ export function TopBar({ onOpenSearch }: { onOpenSearch?: () => void }) {
         description: `${data?.videos ?? 0} videos · ${data?.analytics ?? 0} analytics rows`,
       });
       setTimeout(() => window.location.reload(), 900);
-    } catch (e: any) {
-      toast({ title: "Seed failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      toast({ title: "Seed failed", description: message, variant: "destructive" });
     } finally {
       setSeeding(false);
     }

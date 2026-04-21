@@ -65,8 +65,9 @@ export default function VideoDetailPage() {
       if (error) throw error;
       await fetchVideo();
       toast({ title: "Analysis complete", description: "AI Reach Prediction is ready." });
-    } catch (e: any) {
-      toast({ title: "Analysis failed", description: e?.message, variant: "destructive" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      toast({ title: "Analysis failed", description: message, variant: "destructive" });
     } finally {
       setAnalyzing(false);
     }
