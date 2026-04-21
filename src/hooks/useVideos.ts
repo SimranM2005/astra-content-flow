@@ -33,7 +33,7 @@ export function useVideos(limit = 8) {
     if (!user) return;
     refresh();
     const channel = supabase
-      .channel(`videos-${user.id}`)
+      .channel(`videos-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "videos", filter: `user_id=eq.${user.id}` },
